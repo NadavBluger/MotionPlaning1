@@ -1,9 +1,10 @@
 import argparse
 import os
 from typing import List, Tuple
-
 from Plotter import Plotter
 from shapely.geometry.polygon import Polygon, LineString
+from shapely.affinity import translate
+from shapely.ops import unary_union
 
 
 # TODO
@@ -14,7 +15,20 @@ def get_minkowsky_sum(original_shape: Polygon, r: float) -> Polygon:
     :param r: The radius of the rhombus
     :return: The polygon composed from the Minkowsky sums
     """
-    raise NotImplementedError()
+    robot = Polygon([
+        (0.0, r),
+        (r, 0.0),
+        (0.0, -r),
+        (-r, 0.0)
+    ])
+    vertices = list(original_shape.exterior.coords)[:-1]
+    translated_robots = [
+        translate(robot, xoff=x, yoff=y)
+        for (x, y) in vertices
+    ]
+    minkowski_poly = unary_union(translated_robots)
+    minkowski_poly = minkowski_poly.convex_hull
+    return minkowski_poly
 
 
 # TODO
@@ -26,6 +40,7 @@ def get_visibility_graph(obstacles: List[Polygon], source=None, dest=None) -> Li
     :param dest: The destination of the query. None for part 1.
     :return: A list of LineStrings holding the edges of the visibility graph
     """
+
     raise NotImplementedError()
 
 
