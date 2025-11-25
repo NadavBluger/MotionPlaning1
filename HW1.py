@@ -3,8 +3,7 @@ import os
 from typing import List, Tuple
 from Plotter import Plotter
 from shapely.geometry.polygon import Polygon, LineString
-from shapely.affinity import translate
-from shapely.ops import unary_union
+
 
 
 # TODO
@@ -19,17 +18,24 @@ def get_minkowsky_sum(original_shape: Polygon, r: float) -> Polygon:
         (0.0, r),
         (r, 0.0),
         (0.0, -r),
-        (-r, 0.0)
+        (-r, 0.0),
     ])
-    vertices = list(original_shape.exterior.coords)[:-1]
-    translated_robots = [
-        translate(robot, xoff=x, yoff=y)
-        for (x, y) in vertices
-    ]
-    minkowski_poly = unary_union(translated_robots)
-    minkowski_poly = minkowski_poly.convex_hull
-    return minkowski_poly
 
+    # Get vertices (drop repeated last coord)
+    original_shapeList = list(original_shape.exterior.coords)[:-1]
+    robotList = list(robot.exterior.coords)[:-1]
+
+    # All pairwise sums of vertices
+    sum_points = [
+        (shapeX + robotX, shapeY + robotY)
+        for (shapeX, shapeY) in original_shapeList
+        for (robotX, robotY) in robotList
+    ]
+
+    # Convex hull of all summed points = Minkowski sum
+    minkowski_poly = Polygon(sum_points).convex_hull
+
+    return minkowski_poly
 
 # TODO
 def get_visibility_graph(obstacles: List[Polygon], source=None, dest=None) -> List[LineString]:
@@ -41,7 +47,7 @@ def get_visibility_graph(obstacles: List[Polygon], source=None, dest=None) -> Li
     :return: A list of LineStrings holding the edges of the visibility graph
     """
 
-    raise NotImplementedError()
+   # raise NotImplementedError()
 
 
 def is_valid_file(parser, arg):
@@ -91,15 +97,15 @@ if __name__ == '__main__':
 
     # step 2:
 
-    lines = get_visibility_graph(c_space_obstacles)
-    plotter2 = Plotter()
+   # lines = get_visibility_graph(c_space_obstacles)
+   # plotter2 = Plotter()
 
-    plotter2.add_obstacles(workspace_obstacles)
-    plotter2.add_c_space_obstacles(c_space_obstacles)
-    plotter2.add_visibility_graph(lines)
-    plotter2.add_robot(source, dist)
+    #plotter2.add_obstacles(workspace_obstacles)
+    #plotter2.add_c_space_obstacles(c_space_obstacles)
+    #plotter2.add_visibility_graph(lines)
+    #plotter2.add_robot(source, dist)
 
-    plotter2.show_graph()
+    #plotter2.show_graph()
 
     # step 3:
     with open(query, 'r') as f:
