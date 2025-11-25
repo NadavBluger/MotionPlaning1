@@ -1,10 +1,14 @@
 import argparse
 import os
 from typing import List, Tuple
+
+from shapely.measurement import distance
+
 from Plotter import Plotter
 from shapely.geometry.polygon import Polygon, LineString
 from shapely.affinity import translate
 from shapely.ops import unary_union
+from shapely import Point, LineString
 
 
 # TODO
@@ -40,8 +44,36 @@ def get_visibility_graph(obstacles: List[Polygon], source=None, dest=None) -> Li
     :param dest: The destination of the query. None for part 1.
     :return: A list of LineStrings holding the edges of the visibility graph
     """
-
-    raise NotImplementedError()
+    vertices  = []
+    graph_vertices = []
+    for obstacle in obstacles:
+        vertices.extend(obstacle.exterior.coords)
+    for point_1 in vertices:
+        for point_2 in vertices:
+            if point_1==point_2:
+                continue
+            line = LineString([point_1, point_2])
+            line_is_free=True
+            for obstacle in obstacles:
+                # if len(obstacle.intersection(line).coords) > 1:
+                if obstacle.intersects(line) and not obstacle.touches(line):
+                    line_is_free=False
+                    break
+            if line_is_free:
+                graph_vertices.append(LineString([point_1, point_2]))
+    if source:
+        source_point= Point(source)
+        point_distances = [(distance(Point(point), source_point), point) for point in points]
+        min_distance = min(point_distances, key=lambda x: x[0])[0]
+        closest_point = [point for d, point in point_distances if min_distance==d][0]
+        graph_vertices.append(LineString([source,closest_point]))
+    if dest:
+        dest_point = Point(source)
+        point_distances = [(distance(Point(point), dest_point), point) for point in points]
+        min_distance = min(point_distances, key=lambda x: x[0])[0]
+        closest_point = [point for d, point in point_distances if min_distance == d][0]
+        graph_vertices.append(LineString([dest, closest_point]))
+    return graph_vertices
 
 
 def is_valid_file(parser, arg):
