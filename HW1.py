@@ -23,17 +23,24 @@ def get_minkowsky_sum(original_shape: Polygon, r: float) -> Polygon:
         (0.0, r),
         (r, 0.0),
         (0.0, -r),
-        (-r, 0.0)
+        (-r, 0.0),
     ])
-    vertices = list(original_shape.exterior.coords)[:-1]
-    translated_robots = [
-        translate(robot, xoff=x, yoff=y)
-        for (x, y) in vertices
-    ]
-    minkowski_poly = unary_union(translated_robots)
-    minkowski_poly = minkowski_poly.convex_hull
-    return minkowski_poly
 
+    # Get vertices (drop repeated last coord)
+    original_shapeList = list(original_shape.exterior.coords)[:-1]
+    robotList = list(robot.exterior.coords)[:-1]
+
+    # All pairwise sums of vertices
+    sum_points = [
+        (shapeX + robotX, shapeY + robotY)
+        for (shapeX, shapeY) in original_shapeList
+        for (robotX, robotY) in robotList
+    ]
+
+    # Convex hull of all summed points = Minkowski sum
+    minkowski_poly = Polygon(sum_points).convex_hull
+
+    return minkowski_poly
 
 # TODO
 def get_visibility_graph(obstacles: List[Polygon], source=None, dest=None) -> List[LineString]:
