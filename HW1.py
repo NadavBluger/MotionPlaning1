@@ -1,9 +1,9 @@
 import argparse
 import os
 from typing import List, Tuple
-
+import heapq
 from shapely.measurement import distance
-
+from collections import defaultdict
 from Plotter import Plotter
 from shapely.geometry.polygon import Polygon, LineString
 from shapely.affinity import translate
@@ -11,7 +11,6 @@ from shapely.ops import unary_union
 from shapely import Point, LineString
 
 
-# TODO
 def get_minkowsky_sum(original_shape: Polygon, r: float) -> Polygon:
     """
     Get the polygon representing the Minkowsky sum
@@ -86,6 +85,44 @@ def get_points_and_dist(line):
     source = tuple(map(float, source.split(',')))
     return source, dist
 
+def shortest_path(source, dest, lines:List[LineString]) -> Tuple[List[Tuple[float, float],int]]:
+    graph = defaultdict(list)
+    #build graph
+    for line in lines:
+        graph[line.coords[0]].append((line.coords[1], line.length))
+        graph[line.coords[1]].append((line.coords[0], line.length))
+
+    #run dijkstra
+    heap = [(0,source)]
+    distances = {point:float('inf') for point in graph.keys()}
+    distances[source]=0
+    reached_from = dict()
+    while heap:
+        current_distance, current_point = heapq.heappop(heap)
+        if current_point == dest:
+            break
+        if current_distance > distances[current_point]:
+            continue
+        for next_point, d in graph[current_point]:
+            new_distance = current_distance+d
+            if new_distance < distances[next_point]:
+                distances[next_point] = new_distance
+                heapq.heappush(heap, (current_distance+d, next_point))
+                reached_from[next_point] = current_point
+
+    #get path
+    path = []
+    current = dest
+    if distances[dest] == float('inf'):
+        return path, float('inf')
+    while current != source:
+        path.append(current)
+        current = reached_from[current]
+    path.append(source)
+    path.reverse()
+    return path, distances
+
+    
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -137,8 +174,7 @@ if __name__ == '__main__':
         dest = tuple(map(float, f.readline().split(',')))
 
     lines = get_visibility_graph(c_space_obstacles, source, dest)
-    #TODO: fill in the next line
-    shortest_path, cost = None, None
+    shortest_path, cost = shortest_path(source, dest, lines)
 
 
     # step 4: Animate the shortest path
