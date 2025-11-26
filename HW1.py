@@ -55,6 +55,10 @@ def get_visibility_graph(obstacles: List[Polygon], source=None, dest=None) -> Li
     graph_vertices = []
     for obstacle in obstacles:
         vertices.extend(obstacle.exterior.coords)
+    if source:
+        vertices.append(source)
+    if dest:
+        vertices.append(dest)
     for point_1 in vertices:
         for point_2 in vertices:
             if point_1==point_2:
@@ -68,18 +72,6 @@ def get_visibility_graph(obstacles: List[Polygon], source=None, dest=None) -> Li
                     break
             if line_is_free:
                 graph_vertices.append(LineString([point_1, point_2]))
-    if source:
-        source_point= Point(source)
-        point_distances = [(distance(Point(point), source_point), point) for point in points]
-        min_distance = min(point_distances, key=lambda x: x[0])[0]
-        closest_point = [point for d, point in point_distances if min_distance==d][0]
-        graph_vertices.append(LineString([source,closest_point]))
-    if dest:
-        dest_point = Point(source)
-        point_distances = [(distance(Point(point), dest_point), point) for point in points]
-        min_distance = min(point_distances, key=lambda x: x[0])[0]
-        closest_point = [point for d, point in point_distances if min_distance == d][0]
-        graph_vertices.append(LineString([dest, closest_point]))
     return graph_vertices
 
 
